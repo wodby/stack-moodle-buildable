@@ -1,0 +1,81 @@
+name: moodle-buildable
+icon: moodle
+title: Moodle (buildable)
+# A variant of the Moodle stack: the catalog suggests them to each other.
+variantOf: moodle
+variant: Buildable
+variantDescription: >-
+  Choose this when you want your own plugins or themes: pin the Moodle version
+  and keep your plugins in a Git repository, and Wodby builds Moodle with them.
+
+services:
+- name: moodle
+  title: Moodle
+  service: moodle-buildable
+  required: true
+  derivatives:
+  - name: cron
+    service: moodle-buildable-cron
+  volumes:
+  - name: moodledata
+    size: 20
+  links:
+  - name: db
+    service: mariadb
+  - name: moodledata
+    service: moodledata-nfs
+  - name: sendmail
+    service: opensmtpd
+  - name: redis
+    service: valkey
+  workloads:
+  - name: main
+    containers:
+    - name: php
+      env:
+      - name: PHP_MEMORY_LIMIT
+        value: 512M
+
+- name: nginx
+  title: Nginx
+  service: moodle-buildable-nginx
+  required: true
+  links:
+  - name: backend
+    service: moodle
+
+- name: mariadb
+  title: MariaDB
+  service: mariadb
+  # Moodle 5.3 needs MariaDB 11.4 or later.
+  options:
+  - version: '12.3'
+  - version: '11.8'
+    default: true
+  - version: '11.4'
+  volumes:
+  - name: data
+    size: 10
+
+- name: moodledata-nfs
+  title: Moodle data NFS storage
+  service: nfs-provisioner
+  volumes:
+  - name: data
+    size: 25
+
+- name: opensmtpd
+  required: false
+  title: OpenSMTPD
+  service: opensmtpd
+
+# Keeps Moodle's sessions when enabled. Session keys expire, so only keys with
+# a time to live are evicted when memory runs out.
+- name: valkey
+  required: false
+  disabled: true
+  title: Valkey
+  service: valkey
+  env:
+  - name: VALKEY_MAXMEMORY_POLICY
+    value: volatile-lru
