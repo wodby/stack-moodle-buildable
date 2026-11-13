@@ -1,5 +1,6 @@
 name: moodle-buildable
 icon: moodle
+docs: https://wodby.com/docs/2.0/stacks/catalog/moodle-buildable/
 title: Moodle (buildable)
 # A variant of the Moodle stack: the catalog suggests them to each other.
 variantOf: moodle
